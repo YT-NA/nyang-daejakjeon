@@ -1,0 +1,17 @@
+{
+  "name": "냥냥 대작전",
+  "short_name": "냥냥 대작전",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#241a2e",
+  "theme_color": "#241a2e",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

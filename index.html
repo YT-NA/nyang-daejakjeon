@@ -2,13 +2,20 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#241a2e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>냥냥 대작전 5</title>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-  html,body{margin:0;height:100%;background:#241a2e;overflow:hidden;font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+  html,body{margin:0;height:100%;background:#241a2e;overflow:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif}
   #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
-  canvas{display:block;border-radius:14px;box-shadow:0 12px 48px rgba(0,0,0,.55)}
+  canvas{display:block;border-radius:min(14px,1.4vmin);box-shadow:0 12px 48px rgba(0,0,0,.55)}
   #ui{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;padding:16px;box-sizing:border-box}
   .card{pointer-events:auto;background:rgba(40,26,52,.95);border:2px solid rgba(255,255,255,.12);border-radius:22px;padding:26px 30px;
         width:min(560px,100%);max-height:100%;overflow:auto;color:#fff;box-shadow:0 14px 40px rgba(0,0,0,.45);box-sizing:border-box}
@@ -61,9 +68,36 @@
   .hidden{display:none!important}
   #toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);color:#fff;padding:10px 18px;border-radius:12px;font-weight:bold;
          pointer-events:none;opacity:0;transition:opacity .3s;z-index:10;max-width:calc(100% - 32px);text-align:center}
+  canvas{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  /* 📱 모바일 터치 조작 */
+  #touch{position:fixed;inset:0;pointer-events:none;z-index:5;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  #touch .tb{pointer-events:auto;position:absolute;touch-action:none;border-radius:50%;padding:0;color:#fff;font-weight:bold;line-height:1.15;
+             background:rgba(255,255,255,.16);border:3px solid rgba(255,255,255,.5);box-shadow:0 4px 14px rgba(0,0,0,.3);
+             text-shadow:0 2px 0 rgba(0,0,0,.45);transition:none;white-space:pre-line}
+  #touch .tb.on{background:rgba(255,224,102,.6)!important;transform:scale(.92)}
+  #tStickZone{pointer-events:auto;position:absolute;left:0;top:0;bottom:0;width:50%;touch-action:none}
+  #tStick{position:absolute;left:calc(110px + env(safe-area-inset-left));bottom:110px;width:124px;height:124px;margin:0 0 -62px -62px;border-radius:50%;
+          background:rgba(255,255,255,.1);border:3px solid rgba(255,255,255,.35);pointer-events:none;opacity:.55}
+  #tStick.on{opacity:1}
+  #tKnob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(255,255,255,.55)}
+  #tA{width:96px;height:96px;right:calc(26px + env(safe-area-inset-right));bottom:30px;font-size:17px;background:rgba(255,107,138,.5)}
+  #tB{width:72px;height:72px;right:calc(136px + env(safe-area-inset-right));bottom:20px;font-size:15px;background:rgba(79,163,255,.5)}
+  #tU{width:66px;height:66px;right:calc(44px + env(safe-area-inset-right));bottom:140px;font-size:13px;background:rgba(255,200,60,.5)}
+  #tPause,#tFull{top:calc(8px + env(safe-area-inset-top));width:44px;height:44px;font-size:17px;border-radius:12px}
+  #tPause{right:calc(8px + env(safe-area-inset-right))}
+  #tFull{right:calc(60px + env(safe-area-inset-right))}
+  .tbar{position:absolute;left:0;right:0;bottom:calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:center;flex-wrap:wrap;gap:8px;pointer-events:none;padding:0 8px}
+  #touch .tbar .tb{position:static;border-radius:14px;min-width:56px;height:48px;font-size:15px;padding:0 12px;background:rgba(40,26,52,.82)}
+  #touch .tbar .tb.go{background:rgba(255,107,138,.85)}
+  #tBase{left:auto;right:calc(8px + env(safe-area-inset-right));top:calc(60px + env(safe-area-inset-top));bottom:auto;flex-direction:column;flex-wrap:nowrap;padding:0;gap:6px}
+  #touch #tBase .tb{min-width:64px;height:46px;padding:0 6px}
+  /* 세로로 들고 있어도 게임은 가로: #stage 를 통째로 90° 돌림 (resize 참고) */
+  #stage{position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden;transform-origin:0 0}
+  #iosTip{margin-top:10px;font-size:13px;line-height:1.5;color:#3a2a00;background:#ffe066;border-radius:12px;padding:8px 12px;text-align:center}
 </style>
 </head>
 <body>
+<div id="stage">
 <div id="wrap"><canvas id="c"></canvas></div>
 <div id="ui">
   <div id="menu" class="card hidden">
@@ -83,7 +117,7 @@
     </div>
     <div class="row"><button id="btnSolo" class="ghost">혼자 연습하기</button><button id="btnShop" class="ghost">👕 코스튬 상점</button></div>
     <div class="help">
-      <b>조작</b> 이동 <kbd>WASD</kbd>/<kbd>방향키</kbd> · 그물 <kbd>Space</kbd>/<kbd>J</kbd> (꾹) · 대시 <kbd>Shift</kbd>/<kbd>K</kbd> · 게임패드 OK
+      <b>조작</b> 이동 <kbd>WASD</kbd>/<kbd>방향키</kbd> · 그물 <kbd>Space</kbd>/<kbd>J</kbd> (꾹) · 대시 <kbd>Shift</kbd>/<kbd>K</kbd> · 게임패드 OK<br>📱 <b>모바일</b>: 왼손 엄지로 끌어서 이동, 오른쪽 버튼으로 그물·대시 (세로로 들어도 가로 화면으로 나와요)
       <ul>
         <li><b>🤝 팀전</b>: 그물로 협동, 점수는 팀 전체로! <b>참깨·땅콩 소대 AI</b>도 그물 들고 경쟁하고, 맛돌이네 쥐도 잡아요.</li>
         <li>💰 출동이 끝날 때마다 <b>용돈</b>! 👕 코스튬 상점에서 모자·장식을 사요. 🐾 장이 끝나면 잡은 친구를 <b>펫</b>으로!</li>
@@ -94,6 +128,7 @@
       </ul>
     </div>
     <div class="best" id="best"></div>
+    <div id="iosTip" class="hidden">📱 아이폰은 주소창을 숨길 수 없어요.<br>사파리 <b>공유 버튼 → 「홈 화면에 추가」</b>로 열면 주소창 없이 꽉 찬 화면으로 할 수 있어요!</div>
   </div>
   <div id="lobby" class="card hidden">
     <div class="badge">🌿 들깨 소대 집결지</div>
@@ -122,6 +157,24 @@
   </div>
 </div>
 <div id="toast"></div>
+<div id="touch" class="hidden">
+  <div id="tStickZone"></div>
+  <div id="tStick"><div id="tKnob"></div></div>
+  <button class="tb" id="tA" data-k="Space">그물</button>
+  <button class="tb" id="tB" data-k="ShiftLeft">대시</button>
+  <button class="tb" id="tU" data-k="KeyL">🌟
+궁극기</button>
+  <div class="tbar" id="tBase">
+    <button class="tb" data-k="ArrowLeft">⏫</button><button class="tb" data-k="ArrowRight">⏬</button>
+    <button class="tb" data-k="Space">+1</button><button class="tb" data-k="ShiftLeft">+10</button><button class="tb go" data-k="KeyR">✅ 준비</button>
+  </div>
+  <div class="tbar" id="tSkip"><button class="tb go" data-k="Enter">넘기기 ▶</button></div>
+  <div class="tbar" id="tOver"><button class="tb" id="tR" data-k="KeyR">다시</button><button class="tb go" id="tEnter" data-k="Enter">계속</button></div>
+  <div class="tbar" id="tAsk"><button class="tb go" data-k="KeyY">🚪 나가기</button><button class="tb" data-k="KeyN">계속하기</button></div>
+  <button class="tb" id="tPause" data-k="Escape">⏸</button>
+  <button class="tb" id="tFull">⛶</button>
+</div>
+</div><!-- #stage -->
 <script>
 'use strict';
 /* =========================================================
@@ -182,9 +235,26 @@ const SPAWN = [[380, 570], [480, 570], [580, 570]];
 
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
+// 터치 조작 상태 (터치하는 순간 켜짐. PC에서 시험: 주소 뒤에 ?touch=1)
+const TOUCH = {
+  on: /[?&]touch=1/.test(location.search) || !!(window.matchMedia && matchMedia('(pointer:coarse)').matches),
+  x: 0, y: 0, stick: null, q: [], mode: '', noFull: false,
+};
+// 휴대폰을 세로로 들고 있으면 화면(#stage)을 통째로 90° 돌려서 가로로 보여 줌
+const stageEl = document.getElementById('stage');
+let ROT = false, VW = innerWidth, CVR = { l: 0, t: 0, w: W, h: H };
+function toStage(x, y) { return ROT ? { x: y, y: VW - x } : { x, y }; }   // 화면 좌표 → 돌린 화면 좌표
 function resize() {
-  const s = Math.min(innerWidth / W, innerHeight / H) * 0.98;
+  const vw = innerWidth, vh = innerHeight;
+  const typing = document.activeElement && document.activeElement.tagName === 'INPUT';   // 키보드 올라와도 뒤집히지 않게
+  if (!typing) ROT = TOUCH.on && vh > vw * 1.05;
+  VW = vw;
+  const sw = ROT ? vh : vw, sh = ROT ? vw : vh;
+  stageEl.style.width = sw + 'px'; stageEl.style.height = sh + 'px';
+  stageEl.style.transform = ROT ? `translate(${vw}px,0) rotate(90deg)` : '';
+  const s = Math.min(sw / W, sh / H) * (TOUCH.on ? 1 : 0.98);
   const dpr = window.devicePixelRatio || 1;
+  CVR = { l: (sw - W * s) / 2, t: (sh - H * s) / 2, w: W * s, h: H * s };
   cv.style.width = W * s + 'px';
   cv.style.height = H * s + 'px';
   cv.width = Math.round(W * s * dpr);
@@ -192,6 +262,7 @@ function resize() {
   ctx.setTransform(s * dpr, 0, 0, s * dpr, 0, 0);
 }
 addEventListener('resize', resize);
+addEventListener('orientationchange', () => setTimeout(resize, 200));
 resize();
 
 /* ---------------- 유틸 ---------------- */
@@ -311,6 +382,135 @@ addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 addEventListener('pointerdown', audioInit);
 
+/* ---------------- 📱 모바일 터치 조작 ----------------
+   왼쪽 절반 아무 데나 엄지를 대고 끌면 조이스틱, 오른쪽 버튼은 키보드 키를 대신 눌러 줌.
+   터치하는 순간 자동으로 켜짐 (PC에서 시험: 주소 뒤에 ?touch=1) */
+const tEl = document.getElementById('touch');
+const T = (k, t) => TOUCH.on ? t : k;   // 화면 안내 문구: 키보드용 / 터치용
+function vk(code, down) {
+  if (down) { if (!keys[code]) pressed[code] = true; keys[code] = true; audioInit(); }
+  else keys[code] = false;
+}
+function releaseVK() {
+  tEl.querySelectorAll('.tb[data-k]').forEach(b => { if (b.classList.contains('on')) { b.classList.remove('on'); vk(b.dataset.k, false); } });
+  stickEnd();
+}
+addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !TOUCH.on) { TOUCH.on = true; resize(); } }, true);
+// 게임 중에 손을 떼는 순간 전체화면 (브라우저는 손 뗄 때만 허락함). ⛶로 직접 끄면 다시 안 켬
+addEventListener('pointerup', e => { if (e.pointerType === 'touch' && !TOUCH.noFull && typeof G !== 'undefined' && (inGame() || G.state === 'lobby')) goFull(); }, true);
+tEl.querySelectorAll('.tb[data-k]').forEach(b => {
+  const k = b.dataset.k;
+  const up = () => { if (!b.classList.contains('on')) return; b.classList.remove('on'); vk(k, false); };
+  b.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try { b.setPointerCapture(e.pointerId); } catch (_) {}
+    b.classList.add('on'); vk(k, true);
+  });
+  b.addEventListener('pointerup', up);
+  b.addEventListener('pointercancel', up);
+  b.addEventListener('lostpointercapture', up);
+  b.addEventListener('contextmenu', e => e.preventDefault());
+});
+// 조이스틱
+const tStick = document.getElementById('tStick'), tKnob = document.getElementById('tKnob'), tZone = document.getElementById('tStickZone');
+const STICK_R = 56;
+function stickEnd() {
+  TOUCH.stick = null; TOUCH.x = TOUCH.y = 0;
+  tStick.classList.remove('on'); tStick.style.left = tStick.style.top = tStick.style.bottom = ''; tKnob.style.transform = '';
+}
+tZone.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (TOUCH.stick) return;
+  try { tZone.setPointerCapture(e.pointerId); } catch (_) {}
+  const q = toStage(e.clientX, e.clientY);
+  TOUCH.stick = { id: e.pointerId, ox: q.x, oy: q.y };
+  tStick.classList.add('on');
+  tStick.style.left = q.x + 'px'; tStick.style.top = (q.y - 62) + 'px'; tStick.style.bottom = 'auto';
+  audioInit();
+});
+tZone.addEventListener('pointermove', e => {
+  const st = TOUCH.stick;
+  if (!st || st.id !== e.pointerId) return;
+  const q = toStage(e.clientX, e.clientY);
+  let dx = q.x - st.ox, dy = q.y - st.oy;
+  const d = Math.hypot(dx, dy);
+  if (d > STICK_R) {   // 너무 멀리 끌면 조이스틱 중심이 손가락을 따라옴
+    const k = (d - STICK_R) / d;
+    st.ox += dx * k; st.oy += dy * k; dx = q.x - st.ox; dy = q.y - st.oy;
+    tStick.style.left = st.ox + 'px'; tStick.style.top = (st.oy - 62) + 'px';
+  }
+  TOUCH.x = dx / STICK_R; TOUCH.y = dy / STICK_R;
+  tKnob.style.transform = `translate(${dx}px,${dy}px)`;
+});
+for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) tZone.addEventListener(ev, e => { if (TOUCH.stick && TOUCH.stick.id === e.pointerId) stickEnd(); });
+// 전체화면 (안드로이드 크롬 등. 아이폰 사파리는 지원 안 함)
+function goFull() {
+  const d = document.documentElement;
+  const req = d.requestFullscreen || d.webkitRequestFullscreen;
+  if (!req || document.fullscreenElement || document.webkitFullscreenElement) return;
+  try {
+    const r = req.call(d);
+    const lock = () => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}); } catch (_) {} };
+    if (r && r.then) r.then(() => { lock(); setTimeout(resize, 300); }).catch(() => {}); else lock();
+  } catch (_) {}
+}
+document.getElementById('tFull').addEventListener('click', () => {
+  if (document.fullscreenElement || document.webkitFullscreenElement) { TOUCH.noFull = true; (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+  else { TOUCH.noFull = false; goFull(); }
+});
+// 캔버스 톡: 기지에서는 줄 고르기(고른 줄 한 번 더 = 1레벨), 컷신에서는 넘기기
+cv.addEventListener('pointerdown', e => {
+  if (G.askLeave) return;
+  const q = toStage(e.clientX, e.clientY);
+  const gx = (q.x - CVR.l) / CVR.w * W, gy = (q.y - CVR.t) / CVR.h * H;
+  if (G.state === 'base') {
+    if (gx < 104 || gx > 856) return;
+    const rows = visibleRows(NET.mySlot), VIS = 7;
+    const myc = clamp(G.cur[NET.mySlot] || 0, 0, rows.length - 1);
+    const start = clamp(myc - 3, 0, Math.max(0, rows.length - VIS));
+    const k = Math.floor((gy - 217) / 46);
+    if (k < 0 || k >= VIS || start + k >= rows.length) return;
+    const i = start + k;
+    TOUCH.q.length = 0;
+    if (i === myc) TOUCH.q.push('s');
+    else for (let n = Math.abs(i - myc); n > 0; n--) TOUCH.q.push(i > myc ? 'd' : 'u');
+  } else if (G.state === 'intro' || G.state === 'clear') pressed.Enter = true;
+});
+const tShow = (id, on) => document.getElementById(id).classList.toggle('hidden', !on);
+const IOS = /iPhone|iPod/.test(navigator.userAgent) && !navigator.standalone && !matchMedia('(display-mode: standalone)').matches;
+if (IOS) document.getElementById('iosTip').classList.remove('hidden');
+// 상태마다 맞는 버튼만 보여 줌 (매 프레임 호출)
+function syncTouch() {
+  const ig = inGame();
+  let m = 'off';
+  if (TOUCH.on && ig) {
+    if (G.askLeave) m = 'ask';
+    else if (G.state === 'play') m = 'play' + (isBrawl() ? 'B' : isTeam() ? 'T' : 'I');
+    else if (G.state === 'base') m = 'base';
+    else if (G.state === 'intro' || G.state === 'clear') m = 'skip';
+    else if (G.state === 'over') m = isLeader() ? 'over' + (G.gameClear || G.champ >= 0 ? 'G' : 'R') + NET.role : 'none';
+  }
+  const key = m + (document.fullscreenElement ? 'f' : '');
+  if (key === TOUCH.mode) return;
+  TOUCH.mode = key;
+  releaseVK();
+  tEl.classList.toggle('hidden', m === 'off');
+  if (m === 'off') return;
+  const play = m.startsWith('play');
+  tShow('tStickZone', play); tShow('tStick', play); tShow('tA', play); tShow('tB', play); tShow('tU', m === 'playB');
+  tShow('tBase', m === 'base'); tShow('tSkip', m === 'skip'); tShow('tOver', m.startsWith('over')); tShow('tAsk', m === 'ask');
+  tShow('tPause', m !== 'ask' && NET.role !== 'none');
+  tShow('tFull', !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen));
+  const A = document.getElementById('tA'), Bt = document.getElementById('tB');
+  if (m === 'playB') { A.textContent = '👊\n펀치'; Bt.textContent = '🦶\n킥'; }
+  else if (m === 'playT') { A.textContent = '🕸\n그물(꾹)'; Bt.textContent = '💨\n대시'; }
+  else if (m === 'playI') { A.textContent = '🥅\n잠자리채'; Bt.textContent = '💨\n대시'; }
+  if (m.startsWith('over')) {
+    document.getElementById('tR').textContent = m[4] === 'G' ? '🔄 처음부터' : '🔄 다시 출동';
+    document.getElementById('tEnter').textContent = NET.role === 'solo' ? '🏠 타이틀로' : '🏠 집결지로';
+  }
+}
+
 let pad = null, padPrev = [];
 function pollPads() {
   const list = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
@@ -334,6 +534,7 @@ function getLocalInput() {
     net = net || btn(0) || btn(6) || btn(7);
     dash = dash || gpEdge(1) || gpEdge(2);
   }
+  if (TOUCH.stick && Math.hypot(TOUCH.x, TOUCH.y) > .2) { x = TOUCH.x; y = TOUCH.y; }
   const m = Math.hypot(x, y);
   if (m > 1) { x /= m; y /= m; }
   return { x, y, net, dash, swing };
@@ -341,6 +542,7 @@ function getLocalInput() {
 const confirmPressed = () => pressed.Space || pressed.Enter || pressed.NumpadEnter || gpEdge(9) || gpEdge(0);
 // 기지 메뉴 입력: u(위) / d(아래) / s(선택)
 function baseKey() {
+  if (TOUCH.q.length) return TOUCH.q.shift();   // 기지 화면 줄 톡
   if (pressed.KeyW || pressed.ArrowUp || gpEdge(12)) return 'u';
   if (pressed.KeyS || pressed.ArrowDown || gpEdge(13)) return 'd';
   if (pressed.Space || pressed.Enter || pressed.KeyJ || gpEdge(0)) return 's';
@@ -1526,8 +1728,8 @@ const BRAWL_STAGES = [
     thanks: '냥냥 특공대 최고! 동네 고양이들의 영웅이에요!', fail: '사냥꾼이 너무 강해요… 업그레이드하고 다시!' },
 ];
 const BRAWL_TIPS = [
-  'Space/J 펀치, Shift/K 킥! 때릴수록 궁극기 게이지가 차요.',
-  '게이지가 꽉 차면 L/E로 궁극기 "냥냥 폭풍"!',
+  '펀치·킥으로 때릴수록 궁극기 게이지가 차요.',
+  '게이지가 꽉 차면 궁극기 "냥냥 폭풍"! (L/E 또는 🌟 버튼)',
   '빨간 ⚠ 표시가 뜨면 그 줄로 물건이 날아와요. 위아래로 피하세요!',
   'HP가 0이 되면 기절! 친구가 옆에 2초 있으면 부활해요.',
   '물총 아줌마는 멀리서 쏴요. 같은 줄에 서지 마세요!',
@@ -3028,11 +3230,11 @@ el.modeTeam.onclick = () => setMode('team');
 el.modeIndiv.onclick = () => setMode('indiv');
 el.name.value = store('nyang_name') || '';
 el.name.addEventListener('change', () => store('nyang_name', el.name.value.trim().slice(0, 6)));
-el.btnHost.onclick = () => { audioInit(); store('nyang_name', myName()); G.score = 0; hostRoom(); };
-el.btnJoin.onclick = () => { audioInit(); store('nyang_name', myName()); G.score = 0; joinRoom(); };
+el.btnHost.onclick = () => { audioInit(); if (TOUCH.on) goFull(); store('nyang_name', myName()); G.score = 0; hostRoom(); };
+el.btnJoin.onclick = () => { audioInit(); if (TOUCH.on) goFull(); store('nyang_name', myName()); G.score = 0; joinRoom(); };
 el.code.addEventListener('keydown', e => { if (e.key === 'Enter') el.btnJoin.click(); });
 el.code.addEventListener('input', () => { el.code.value = el.code.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
-el.btnSolo.onclick = () => { audioInit(); store('nyang_name', myName()); startSolo(); };
+el.btnSolo.onclick = () => { audioInit(); if (TOUCH.on) goFull(); store('nyang_name', myName()); startSolo(); };
 el.btnCancel.onclick = () => failConnect('연결을 취소했어요');
 el.btnLeave.onclick = () => leave();
 el.btnStart.onclick = () => { if (NET.role === 'host' && G.state === 'lobby') newGame(); };
@@ -3773,6 +3975,7 @@ function drawClient() {
 }
 // 왼쪽 아래 구석 조작키 안내 (플레이어가 가까이 오면 흐려짐)
 function drawControls() {
+  if (TOUCH.on) return;   // 터치 화면엔 버튼에 이름이 붙어 있음
   const x0 = AR.x + 8, y0 = AR.y + AR.h - 32, h = 24;
   const items = isBrawl()
     ? [['WASD', '방향키', '이동'], ['Space', 'J', '펀치'], ['Shift', 'K', '킥'], ['L', 'E', '궁극기']]
@@ -4020,7 +4223,7 @@ function drawSkipBar(y, frac, active = true) {
   const n = slots.filter(s => G.skips[s]).length;
   const label = !active ? '' : G.skips[NET.mySlot]
     ? `넘기기 투표 완료! (${n}/${slots.length})`
-    : `Space / Enter: 넘기기 (${n}/${slots.length})`;
+    : `${T('Space / Enter', '화면 톡')}: 넘기기 (${n}/${slots.length})`;
   ctx.font = `bold 13px ${FONT}`;
   const tw = label ? ctx.measureText(label).width + 10 : 0;
   let x = W / 2 - (tw + slots.length * 20) / 2;
@@ -4206,7 +4409,7 @@ function drawChampion() {
   txt('최종 전적', 250, 304, 12, '#ffe066', 'left');
   drawRankRows(316, G.overT, true);
   if (G.overT > .8) {
-    if (isLeader()) txt(`R: 새 게임    ${NET.role === 'solo' ? 'Enter: 타이틀로' : 'Enter: 집결지로'}`, W / 2, 540, 17, '#fff', 'center', 'bold', '#2a6cc0', 4);
+    if (isLeader() && !TOUCH.on) txt(`R: 새 게임    ${NET.role === 'solo' ? 'Enter: 타이틀로' : 'Enter: 집결지로'}`, W / 2, 540, 17, '#fff', 'center', 'bold', '#2a6cc0', 4);
     else txt('방장의 선택을 기다리는 중...', W / 2, 540, 15, 'rgba(255,255,255,.7)', 'center', 'normal');
   }
 }
@@ -4242,7 +4445,7 @@ function drawGameClear() {
   }
   txt('💰 클리어 축하금을 받았어요! 집결지에서 👕 코스튬 상점에 가서 용돈을 써보세요!', W / 2, 508, 14, '#ffe9b0');
   if (G.overT > .8) {
-    if (isLeader()) txt(`Enter: ${NET.role === 'solo' ? '타이틀로' : '집결지로 (코스튬 상점)'}    R: 처음부터 다시`, W / 2, 540, 16, '#fff', 'center', 'bold', '#2a6cc0', 4);
+    if (isLeader() && !TOUCH.on) txt(`Enter: ${NET.role === 'solo' ? '타이틀로' : '집결지로 (코스튬 상점)'}    R: 처음부터 다시`, W / 2, 540, 16, '#fff', 'center', 'bold', '#2a6cc0', 4);
     else txt('방장이 집결지로 데려갈 거예요...', W / 2, 540, 15, 'rgba(255,255,255,.7)', 'center', 'normal');
   }
 }
@@ -4261,7 +4464,7 @@ function drawOver() {
   else { txt('최종 순위', 250, 304, 12, '#ffe066', 'left'); drawRankRows(316, G.overT, true); }
   if (G.overT > .8) {
     if (isLeader()) {
-      txt(`R: 다시 출동    ${NET.role === 'solo' ? 'Enter: 타이틀로' : 'Enter: 집결지로'}`, W / 2, 540, 17, '#fff', 'center', 'bold', '#2a6cc0', 4);
+      if (!TOUCH.on) txt(`R: 다시 출동    ${NET.role === 'solo' ? 'Enter: 타이틀로' : 'Enter: 집결지로'}`, W / 2, 540, 17, '#fff', 'center', 'bold', '#2a6cc0', 4);
     } else txt('방장의 선택을 기다리는 중...', W / 2, 540, 15, 'rgba(255,255,255,.7)', 'center', 'normal');
   }
 }
@@ -4302,7 +4505,7 @@ function drawBase() {
   const curKey = sl => { const r = visibleRows(sl); return rowKey(r[clamp(G.cur[sl] || 0, 0, r.length - 1)]); };
   const start = clamp(myc - 3, 0, Math.max(0, rowsAll.length - VIS));
   if (start > 0) txt('▲ 위에 더 있어요', 480, 214, 11, 'rgba(255,255,255,.55)');
-  if (start + VIS < rowsAll.length) txt('▼ 아래에 더 있어요 (R: 바로 준비)', 480, 556, 11, 'rgba(255,255,255,.55)');
+  if (start + VIS < rowsAll.length) txt(`▼ 아래에 더 있어요 (${T('R', '준비 버튼')}: 바로 준비)`, 480, 556, 11, 'rgba(255,255,255,.55)');
   ctx.fillStyle = 'rgba(255,255,255,.1)'; rr(ctx, 862, 216, 6, 330, 3); ctx.fill();
   ctx.fillStyle = '#b8f2a0'; rr(ctx, 862, 216 + 330 * start / rowsAll.length, 6, 330 * VIS / rowsAll.length, 3); ctx.fill();
   rowsAll.forEach((u, i) => {
@@ -4320,7 +4523,7 @@ function drawBase() {
     if (u === 'pet') {
       txt('🐾', 160, y, 20, '#fff');
       txt('펫 고르기', 182, y - 8, 16, '#ffe066', 'left');
-      txt('이번 장에서 잡은 친구를 다음 장에 데려가요 (Space로 바꾸기)', 182, y + 11, 11, 'rgba(255,255,255,.6)', 'left', 'normal');
+      txt(`이번 장에서 잡은 친구를 다음 장에 데려가요 (${T('Space로', '한 번 더 톡해서')} 바꾸기)`, 182, y + 11, 11, 'rgba(255,255,255,.6)', 'left', 'normal');
       slots.forEach((sl, j) => {
         const x = 520 + (330 / slots.length) * (j + .5);
         const key = G.petPick[sl] || '';
@@ -4357,14 +4560,15 @@ function drawBase() {
     });
   });
   const rn = slots.filter(s => G.ready[s]).length;
-  txt(`↑↓ 한 줄 · ←→ 5줄 · Space 1레벨 · Shift 10레벨 · R 준비  ·  준비 ${rn}/${slots.length} — 모두 준비되면 출동!`, W / 2, 578, 14, 'rgba(255,255,255,.8)');
+  txt(TOUCH.on ? `줄 톡: 고르기 · 고른 줄 한 번 더 톡: 1레벨 · +10: 10레벨  ·  준비 ${rn}/${slots.length} — 모두 준비되면 출동!`
+    : `↑↓ 한 줄 · ←→ 5줄 · Space 1레벨 · Shift 10레벨 · R 준비 · 줄 클릭 OK  ·  준비 ${rn}/${slots.length} — 모두 준비되면 출동!`, W / 2, 578, 14, 'rgba(255,255,255,.8)');
 }
 function drawLeaveAsk() {
   dim(.5);
   panel(290, 235, 380, 180);
   txt('방에서 나갈까요?', W / 2, 280, 26, '#fff');
   if (NET.role === 'host') txt('방장이 나가면 모두 연결이 끊겨요', W / 2, 318, 14, '#ffb3b3', 'center', 'normal');
-  txt('Y: 나가기    N / Esc: 계속', W / 2, 365, 17, '#ffe066');
+  txt(T('Y: 나가기    N / Esc: 계속', '아래 버튼을 눌러요'), W / 2, 365, 17, '#ffe066');
 }
 function drawParts() {
   for (const p of G.parts) {
@@ -4437,6 +4641,7 @@ function tick(now, draw) {
   pollPads();
   update(dt);
   for (const k in pressed) delete pressed[k];
+  syncTouch();
   savePadPrev();
   syncUI();
   if (draw) render();
